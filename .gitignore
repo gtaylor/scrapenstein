@@ -64,3 +64,4 @@ vendor/
 
 # Project-specific files
 scrapenstein
+.compose
