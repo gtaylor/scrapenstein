@@ -5,8 +5,10 @@ import (
 	"github.com/gtaylor/scrapenstein/pkg/db"
 )
 
+type ScrapePrioritiesOptions struct{}
+
 // Scrape and store Pagerduty Priorities.
-func ScrapePriorities(dbUrl string, authToken string) (int, error) {
+func ScrapePriorities(dbUrl string, authToken string, options ScrapePrioritiesOptions) (int, error) {
 	client := pagerduty.NewClient(authToken)
 	totalPriorities := 0
 	response, err := client.ListPriorities()

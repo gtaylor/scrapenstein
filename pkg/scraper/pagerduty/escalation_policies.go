@@ -5,8 +5,10 @@ import (
 	"github.com/gtaylor/scrapenstein/pkg/db"
 )
 
+type ScrapeEscalationPoliciesOptions struct{}
+
 // Scrape and store Pagerduty Escalation Policies.
-func ScrapeEscalationPolicies(dbUrl string, authToken string) (int, error) {
+func ScrapeEscalationPolicies(dbUrl string, authToken string, options ScrapeEscalationPoliciesOptions) (int, error) {
 	listOptions := pagerduty.ListEscalationPoliciesOptions{
 		APIListObject: defaultAPIListObject(),
 	}

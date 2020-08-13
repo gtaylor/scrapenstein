@@ -6,8 +6,10 @@ import (
 	"time"
 )
 
+type ScrapeServicesOptions struct{}
+
 // Scrape and store Pagerduty Services.
-func ScrapeServices(dbUrl string, authToken string) (int, error) {
+func ScrapeServices(dbUrl string, authToken string, options ScrapeServicesOptions) (int, error) {
 	listOptions := pagerduty.ListServiceOptions{
 		APIListObject: defaultAPIListObject(),
 	}

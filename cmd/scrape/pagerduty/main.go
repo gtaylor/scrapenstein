@@ -34,8 +34,9 @@ func priorityCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			authToken := c.String(authTokenFlagName)
 			dbUrl := c.String(common.DatabaseURLFlagName)
+			options := pagerduty.ScrapePrioritiesOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Priorities.")
-			numScraped, err := pagerduty.ScrapePriorities(dbUrl, authToken)
+			numScraped, err := pagerduty.ScrapePriorities(dbUrl, authToken, options)
 			if err != nil {
 				return err
 			}
@@ -56,8 +57,9 @@ func teamCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			authToken := c.String(authTokenFlagName)
 			dbUrl := c.String(common.DatabaseURLFlagName)
+			options := pagerduty.ScrapeTeamsOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Teams.")
-			numScraped, err := pagerduty.ScrapeTeams(dbUrl, authToken)
+			numScraped, err := pagerduty.ScrapeTeams(dbUrl, authToken, options)
 			if err != nil {
 				return err
 			}
@@ -78,8 +80,9 @@ func escalationPolicyCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			authToken := c.String(authTokenFlagName)
 			dbUrl := c.String(common.DatabaseURLFlagName)
+			options := pagerduty.ScrapeEscalationPoliciesOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Escalation Policies.")
-			numScraped, err := pagerduty.ScrapeEscalationPolicies(dbUrl, authToken)
+			numScraped, err := pagerduty.ScrapeEscalationPolicies(dbUrl, authToken, options)
 			if err != nil {
 				return err
 			}
@@ -100,8 +103,9 @@ func serviceCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			authToken := c.String(authTokenFlagName)
 			dbUrl := c.String(common.DatabaseURLFlagName)
+			options := pagerduty.ScrapeServicesOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Services.")
-			numScraped, err := pagerduty.ScrapeServices(dbUrl, authToken)
+			numScraped, err := pagerduty.ScrapeServices(dbUrl, authToken, options)
 			if err != nil {
 				return err
 			}
@@ -163,14 +167,15 @@ func incidentCommand() *cli.Command {
 				return err
 			}
 
-			logrus.Infof("Beginning scrape of PagerDuty Incidents between %s and %s.",
-				sinceTime.Format(time.RFC3339), untilTime.Format(time.RFC3339))
 			options := pagerduty.ScrapeIncidentsOptions{
 				SinceTime:  sinceTime,
 				UntilTime:  untilTime,
 				TeamIds:    teamIds,
 				ServiceIds: serviceIds,
 			}
+
+			logrus.Infof("Beginning scrape of PagerDuty Incidents between %s and %s.",
+				sinceTime.Format(time.RFC3339), untilTime.Format(time.RFC3339))
 			numScraped, err := pagerduty.ScrapeIncidents(dbUrl, authToken, options)
 			if err != nil {
 				return err

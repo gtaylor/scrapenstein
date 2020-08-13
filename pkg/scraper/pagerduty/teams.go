@@ -5,8 +5,10 @@ import (
 	"github.com/gtaylor/scrapenstein/pkg/db"
 )
 
+type ScrapeTeamsOptions struct{}
+
 // Scrape and store Pagerduty Teams.
-func ScrapeTeams(dbUrl string, authToken string) (int, error) {
+func ScrapeTeams(dbUrl string, authToken string, options ScrapeTeamsOptions) (int, error) {
 	listOptions := pagerduty.ListTeamOptions{
 		APIListObject: defaultAPIListObject(),
 	}
