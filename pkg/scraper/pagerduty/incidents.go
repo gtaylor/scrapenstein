@@ -6,11 +6,24 @@ import (
 	"time"
 )
 
+type ScrapeIncidentsOptions struct {
+	// Start of the date range to query. Empty = no limit.
+	SinceTime time.Time
+	// End of the date range to query. Empty = no limit.
+	UntilTime time.Time
+	// If non-empty, limit the query to these team IDS.
+	TeamIds []string
+	// If non-empty, limit the query to these service IDS.
+	ServiceIds []string
+}
+
 // Scrape and store Pagerduty Incidents.
-func ScrapeIncidents(dbUrl string, authToken string, sinceTime time.Time, untilTime time.Time) (int, error) {
+func ScrapeIncidents(dbUrl string, authToken string, options ScrapeIncidentsOptions) (int, error) {
 	listOptions := pagerduty.ListIncidentsOptions{
-		Since:         sinceTime.Format(time.RFC3339),
-		Until:         untilTime.Format(time.RFC3339),
+		Since:         options.SinceTime.Format(time.RFC3339),
+		Until:         options.UntilTime.Format(time.RFC3339),
+		TeamIDs:       options.TeamIds,
+		ServiceIDs:    options.ServiceIds,
 		APIListObject: defaultAPIListObject(),
 	}
 	client := pagerduty.NewClient(authToken)

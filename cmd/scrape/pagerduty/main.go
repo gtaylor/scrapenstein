@@ -126,6 +126,14 @@ func incidentCommand() *cli.Command {
 				Usage: "The end of the date range to search.",
 				Value: "now",
 			},
+			&cli.StringSliceFlag{
+				Name:  "team-id",
+				Usage: "Only scrape incidents for the specified teams.",
+			},
+			&cli.StringSliceFlag{
+				Name:  "service-id",
+				Usage: "Only scrape incidents for the specified service.",
+			},
 		),
 		Before: func(c *cli.Context) error {
 			return pdValidators(c)
@@ -133,6 +141,15 @@ func incidentCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			authToken := c.String(authTokenFlagName)
 			dbUrl := c.String(common.DatabaseURLFlagName)
+
+			teamIds := c.StringSlice("team-id")
+			if len(teamIds) > 0 {
+				logrus.Infof("Limiting scrape to team IDs: %v", teamIds)
+			}
+			serviceIds := c.StringSlice("service-id")
+			if len(serviceIds) > 0 {
+				logrus.Infof("Limiting scrape to service IDs: %v", serviceIds)
+			}
 
 			since := c.String("since")
 			sinceTime, err := tparse.ParseNow(time.RFC3339, since)
@@ -148,7 +165,13 @@ func incidentCommand() *cli.Command {
 
 			logrus.Infof("Beginning scrape of PagerDuty Incidents between %s and %s.",
 				sinceTime.Format(time.RFC3339), untilTime.Format(time.RFC3339))
-			numScraped, err := pagerduty.ScrapeIncidents(dbUrl, authToken, sinceTime, untilTime)
+			options := pagerduty.ScrapeIncidentsOptions{
+				SinceTime:  sinceTime,
+				UntilTime:  untilTime,
+				TeamIds:    teamIds,
+				ServiceIds: serviceIds,
+			}
+			numScraped, err := pagerduty.ScrapeIncidents(dbUrl, authToken, options)
 			if err != nil {
 				return err
 			}
