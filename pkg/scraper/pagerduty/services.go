@@ -9,11 +9,11 @@ import (
 type ScrapeServicesOptions struct{}
 
 // Scrape and store Pagerduty Services.
-func ScrapeServices(dbUrl string, authToken string, options ScrapeServicesOptions) (int, error) {
+func ScrapeServices(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeServicesOptions) (int, error) {
 	listOptions := pagerduty.ListServiceOptions{
 		APIListObject: defaultAPIListObject(),
 	}
-	client := pagerduty.NewClient(authToken)
+	client := newPDClient(pdOptions)
 	totalTeams := 0
 	for {
 		response, err := client.ListServices(listOptions)
@@ -21,7 +21,7 @@ func ScrapeServices(dbUrl string, authToken string, options ScrapeServicesOption
 			return totalTeams, err
 		}
 		for _, service := range response.Services {
-			if err := storeService(dbUrl, &service); err != nil {
+			if err := storeService(dbOptions, &service); err != nil {
 				return totalTeams, err
 			}
 			totalTeams += 1
@@ -49,7 +49,7 @@ const storeServiceQuery = `
 			team_ids=excluded.team_ids
 `
 
-func storeService(dbUrl string, service *pagerduty.Service) error {
+func storeService(dbOptions db.DatabaseOptions, service *pagerduty.Service) error {
 	createdAt, err := parseDateTime(service.CreateAt)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func storeService(dbUrl string, service *pagerduty.Service) error {
 		}
 	}
 	_, err = db.SingleExec(
-		dbUrl, storeServiceQuery,
+		dbOptions, storeServiceQuery,
 		service.ID, service.Summary, service.Name, service.Description, createdAt, lastIncidentPt,
 		service.EscalationPolicy.ID, teamIds)
 	return err

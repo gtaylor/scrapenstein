@@ -18,7 +18,7 @@ type ScrapeIncidentsOptions struct {
 }
 
 // Scrape and store Pagerduty Incidents.
-func ScrapeIncidents(dbUrl string, authToken string, options ScrapeIncidentsOptions) (int, error) {
+func ScrapeIncidents(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeIncidentsOptions) (int, error) {
 	listOptions := pagerduty.ListIncidentsOptions{
 		Since:         options.SinceTime.Format(time.RFC3339),
 		Until:         options.UntilTime.Format(time.RFC3339),
@@ -26,7 +26,7 @@ func ScrapeIncidents(dbUrl string, authToken string, options ScrapeIncidentsOpti
 		ServiceIDs:    options.ServiceIds,
 		APIListObject: defaultAPIListObject(),
 	}
-	client := pagerduty.NewClient(authToken)
+	client := newPDClient(pdOptions)
 	totalIncidents := 0
 	for {
 		response, err := client.ListIncidents(listOptions)
@@ -34,7 +34,7 @@ func ScrapeIncidents(dbUrl string, authToken string, options ScrapeIncidentsOpti
 			return totalIncidents, err
 		}
 		for _, incident := range response.Incidents {
-			if err := storeIncident(dbUrl, &incident); err != nil {
+			if err := storeIncident(dbOptions, &incident); err != nil {
 				return totalIncidents, err
 			}
 			totalIncidents += 1
@@ -67,7 +67,7 @@ const storeIncidentQuery = `
 			priority_id=excluded.priority_id,
 			urgency=excluded.urgency`
 
-func storeIncident(dbUrl string, incident *pagerduty.Incident) error {
+func storeIncident(dbOptions db.DatabaseOptions, incident *pagerduty.Incident) error {
 	createdAt, err := parseDateTime(incident.CreatedAt)
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func storeIncident(dbUrl string, incident *pagerduty.Incident) error {
 	}
 
 	_, err = db.SingleExec(
-		dbUrl, storeIncidentQuery,
+		dbOptions, storeIncidentQuery,
 		incident.Id, incident.Summary, incident.IncidentNumber, createdAt,
 		incident.Status, incident.Title, incident.IncidentKey, incident.Service.ID,
 		lastStatusChangeAt, incident.EscalationPolicy.ID, teamIds, priorityId,

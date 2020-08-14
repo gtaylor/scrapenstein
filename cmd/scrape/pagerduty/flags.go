@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"errors"
 	"github.com/gtaylor/scrapenstein/cmd/scrape/common"
+	"github.com/gtaylor/scrapenstein/pkg/scraper/pagerduty"
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,7 +18,7 @@ func authTokenFlag() *cli.StringFlag {
 }
 
 // Most or all of the PagerDuty subcommands have the same flags.
-func pdFlags(others ...cli.Flag) []cli.Flag {
+func pagerDutyFlags(others ...cli.Flag) []cli.Flag {
 	return append([]cli.Flag{
 		common.DatabaseURLFlag(),
 		authTokenFlag(),
@@ -32,7 +33,7 @@ func mustSetAuthToken(c *cli.Context) error {
 }
 
 // The pre-command (Before) validation is the same for all PD subcommands as well.
-func pdValidators(c *cli.Context) error {
+func pagerDutyValidators(c *cli.Context) error {
 	if err := common.MustSetDatabaseURL(c); err != nil {
 		return err
 	}
@@ -40,4 +41,10 @@ func pdValidators(c *cli.Context) error {
 		return err
 	}
 	return nil
+}
+
+func pagerDutyOptionsFromCtx(c *cli.Context) pagerduty.PagerDutyOptions {
+	return pagerduty.PagerDutyOptions{
+		AuthToken: c.String(authTokenFlagName),
+	}
 }

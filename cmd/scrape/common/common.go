@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"github.com/gtaylor/scrapenstein/pkg/db"
 	"github.com/urfave/cli/v2"
 )
 
@@ -19,5 +20,12 @@ func DatabaseURLFlag() *cli.StringFlag {
 		Name:    DatabaseURLFlagName,
 		Usage:   "Database URL",
 		EnvVars: []string{"DATABASE_URL"},
+	}
+}
+
+// Pulls DB configs from CLI and returns a DatabaseOptions instance.
+func DatabaseOptionsFromCtx(c *cli.Context) db.DatabaseOptions {
+	return db.DatabaseOptions{
+		URL: c.String(DatabaseURLFlagName),
 	}
 }

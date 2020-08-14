@@ -8,11 +8,11 @@ import (
 type ScrapeTeamsOptions struct{}
 
 // Scrape and store Pagerduty Teams.
-func ScrapeTeams(dbUrl string, authToken string, options ScrapeTeamsOptions) (int, error) {
+func ScrapeTeams(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeTeamsOptions) (int, error) {
 	listOptions := pagerduty.ListTeamOptions{
 		APIListObject: defaultAPIListObject(),
 	}
-	client := pagerduty.NewClient(authToken)
+	client := newPDClient(pdOptions)
 	totalTeams := 0
 	for {
 		response, err := client.ListTeams(listOptions)
@@ -20,7 +20,7 @@ func ScrapeTeams(dbUrl string, authToken string, options ScrapeTeamsOptions) (in
 			return totalTeams, err
 		}
 		for _, team := range response.Teams {
-			if err := storeTeam(dbUrl, &team); err != nil {
+			if err := storeTeam(dbOptions, &team); err != nil {
 				return totalTeams, err
 			}
 			totalTeams += 1
@@ -44,9 +44,9 @@ const storeTeamQuery = `
 			description=excluded.description
 `
 
-func storeTeam(dbUrl string, team *pagerduty.Team) error {
+func storeTeam(dbOptions db.DatabaseOptions, team *pagerduty.Team) error {
 	_, err := db.SingleExec(
-		dbUrl, storeTeamQuery,
+		dbOptions, storeTeamQuery,
 		team.ID, team.Summary, team.Name, team.Description)
 	return err
 }

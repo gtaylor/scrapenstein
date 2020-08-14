@@ -8,15 +8,15 @@ import (
 type ScrapePrioritiesOptions struct{}
 
 // Scrape and store Pagerduty Priorities.
-func ScrapePriorities(dbUrl string, authToken string, options ScrapePrioritiesOptions) (int, error) {
-	client := pagerduty.NewClient(authToken)
-	totalPriorities := 0
+func ScrapePriorities(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapePrioritiesOptions) (int, error) {
+	client := newPDClient(pdOptions)
 	response, err := client.ListPriorities()
 	if err != nil {
-		return totalPriorities, err
+		return 0, err
 	}
+	totalPriorities := 0
 	for _, priority := range response.Priorities {
-		if err := storePriority(dbUrl, &priority); err != nil {
+		if err := storePriority(dbOptions, &priority); err != nil {
 			return totalPriorities, err
 		}
 		totalPriorities += 1
@@ -35,9 +35,9 @@ const storePriorityQuery = `
 			description=excluded.description
 `
 
-func storePriority(dbUrl string, priority *pagerduty.PriorityProperty) error {
+func storePriority(dbOptions db.DatabaseOptions, priority *pagerduty.PriorityProperty) error {
 	_, err := db.SingleExec(
-		dbUrl, storePriorityQuery,
+		dbOptions, storePriorityQuery,
 		priority.ID, priority.Summary, priority.Name, priority.Description)
 	return err
 }
