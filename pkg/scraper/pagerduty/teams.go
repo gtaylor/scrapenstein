@@ -1,14 +1,15 @@
 package pagerduty
 
 import (
+	"context"
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 )
 
 type ScrapeTeamsOptions struct{}
 
 // Scrape and store Pagerduty Teams.
-func ScrapeTeams(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeTeamsOptions) (int, error) {
+func ScrapeTeams(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeTeamsOptions) (int, error) {
 	listOptions := pagerduty.ListTeamOptions{
 		APIListObject: defaultAPIListObject(),
 	}
@@ -20,7 +21,7 @@ func ScrapeTeams(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, optio
 			return totalTeams, err
 		}
 		for _, team := range response.Teams {
-			if err := storeTeam(dbOptions, &team); err != nil {
+			if err := storeTeam(dbConn, &team); err != nil {
 				return totalTeams, err
 			}
 			totalTeams += 1
@@ -45,9 +46,9 @@ const storeTeamQuery = `
 			description=excluded.description
 `
 
-func storeTeam(dbOptions db.DatabaseOptions, team *pagerduty.Team) error {
-	_, err := db.SingleExec(
-		dbOptions, storeTeamQuery,
+func storeTeam(dbConn *pgx.Conn, team *pagerduty.Team) error {
+	_, err := dbConn.Exec(
+		context.Background(), storeTeamQuery,
 		team.ID, team.Summary, team.Name, team.Description)
 	return err
 }

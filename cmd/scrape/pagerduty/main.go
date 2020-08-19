@@ -2,6 +2,7 @@ package pagerduty
 
 import (
 	"github.com/gtaylor/scrapenstein/cmd/scrape/common"
+	"github.com/gtaylor/scrapenstein/pkg/db"
 	"github.com/gtaylor/scrapenstein/pkg/scraper/pagerduty"
 	"github.com/karrick/tparse/v2"
 	"github.com/sirupsen/logrus"
@@ -34,9 +35,13 @@ func priorityCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			pdOptions := pagerDutyOptionsFromCtx(c)
 			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
 			options := pagerduty.ScrapePrioritiesOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Priorities.")
-			numScraped, err := pagerduty.ScrapePriorities(dbOptions, pdOptions, options)
+			numScraped, err := pagerduty.ScrapePriorities(dbConn, pdOptions, options)
 			if err != nil {
 				return err
 			}
@@ -57,9 +62,13 @@ func teamCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			pdOptions := pagerDutyOptionsFromCtx(c)
 			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
 			options := pagerduty.ScrapeTeamsOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Teams.")
-			numScraped, err := pagerduty.ScrapeTeams(dbOptions, pdOptions, options)
+			numScraped, err := pagerduty.ScrapeTeams(dbConn, pdOptions, options)
 			if err != nil {
 				return err
 			}
@@ -80,9 +89,13 @@ func escalationPolicyCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			pdOptions := pagerDutyOptionsFromCtx(c)
 			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
 			options := pagerduty.ScrapeEscalationPoliciesOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Escalation Policies.")
-			numScraped, err := pagerduty.ScrapeEscalationPolicies(dbOptions, pdOptions, options)
+			numScraped, err := pagerduty.ScrapeEscalationPolicies(dbConn, pdOptions, options)
 			if err != nil {
 				return err
 			}
@@ -103,9 +116,13 @@ func serviceCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			pdOptions := pagerDutyOptionsFromCtx(c)
 			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
 			options := pagerduty.ScrapeServicesOptions{}
 			logrus.Info("Beginning scrape of PagerDuty Services.")
-			numScraped, err := pagerduty.ScrapeServices(dbOptions, pdOptions, options)
+			numScraped, err := pagerduty.ScrapeServices(dbConn, pdOptions, options)
 			if err != nil {
 				return err
 			}
@@ -145,6 +162,10 @@ func incidentCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			pdOptions := pagerDutyOptionsFromCtx(c)
 			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
 
 			teamIds := c.StringSlice("team-id")
 			if len(teamIds) > 0 {
@@ -176,7 +197,7 @@ func incidentCommand() *cli.Command {
 
 			logrus.Infof("Beginning scrape of PagerDuty Incidents between %s and %s.",
 				sinceTime.Format(time.RFC3339), untilTime.Format(time.RFC3339))
-			numScraped, err := pagerduty.ScrapeIncidents(dbOptions, pdOptions, options)
+			numScraped, err := pagerduty.ScrapeIncidents(dbConn, pdOptions, options)
 			if err != nil {
 				return err
 			}

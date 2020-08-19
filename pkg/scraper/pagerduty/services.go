@@ -1,15 +1,16 @@
 package pagerduty
 
 import (
+	"context"
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 	"time"
 )
 
 type ScrapeServicesOptions struct{}
 
 // Scrape and store Pagerduty Services.
-func ScrapeServices(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeServicesOptions) (int, error) {
+func ScrapeServices(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeServicesOptions) (int, error) {
 	listOptions := pagerduty.ListServiceOptions{
 		APIListObject: defaultAPIListObject(),
 	}
@@ -21,7 +22,7 @@ func ScrapeServices(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, op
 			return totalTeams, err
 		}
 		for _, service := range response.Services {
-			if err := storeService(dbOptions, &service); err != nil {
+			if err := storeService(dbConn, &service); err != nil {
 				return totalTeams, err
 			}
 			totalTeams += 1
@@ -50,7 +51,7 @@ const storeServiceQuery = `
 			team_ids=excluded.team_ids
 `
 
-func storeService(dbOptions db.DatabaseOptions, service *pagerduty.Service) error {
+func storeService(dbConn *pgx.Conn, service *pagerduty.Service) error {
 	createdAt, err := parseDateTime(service.CreateAt)
 	if err != nil {
 		return err
@@ -70,8 +71,8 @@ func storeService(dbOptions db.DatabaseOptions, service *pagerduty.Service) erro
 			teamIds = append(teamIds, team.ID)
 		}
 	}
-	_, err = db.SingleExec(
-		dbOptions, storeServiceQuery,
+	_, err = dbConn.Exec(
+		context.Background(), storeServiceQuery,
 		service.ID, service.Summary, service.Name, service.Description, createdAt, lastIncidentPt,
 		service.EscalationPolicy.ID, teamIds)
 	return err

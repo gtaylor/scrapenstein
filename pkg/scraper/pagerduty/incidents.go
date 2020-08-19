@@ -1,8 +1,9 @@
 package pagerduty
 
 import (
+	"context"
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type ScrapeIncidentsOptions struct {
 }
 
 // Scrape and store Pagerduty Incidents.
-func ScrapeIncidents(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeIncidentsOptions) (int, error) {
+func ScrapeIncidents(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeIncidentsOptions) (int, error) {
 	listOptions := pagerduty.ListIncidentsOptions{
 		Since:         options.SinceTime.Format(time.RFC3339),
 		Until:         options.UntilTime.Format(time.RFC3339),
@@ -34,7 +35,7 @@ func ScrapeIncidents(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, o
 			return totalIncidents, err
 		}
 		for _, incident := range response.Incidents {
-			if err := storeIncident(dbOptions, &incident); err != nil {
+			if err := storeIncident(dbConn, &incident); err != nil {
 				return totalIncidents, err
 			}
 			totalIncidents += 1
@@ -68,7 +69,7 @@ const storeIncidentQuery = `
 			priority_id=excluded.priority_id,
 			urgency=excluded.urgency`
 
-func storeIncident(dbOptions db.DatabaseOptions, incident *pagerduty.Incident) error {
+func storeIncident(dbConn *pgx.Conn, incident *pagerduty.Incident) error {
 	createdAt, err := parseDateTime(incident.CreatedAt)
 	if err != nil {
 		return err
@@ -88,8 +89,8 @@ func storeIncident(dbOptions db.DatabaseOptions, incident *pagerduty.Incident) e
 		}
 	}
 
-	_, err = db.SingleExec(
-		dbOptions, storeIncidentQuery,
+	_, err = dbConn.Exec(
+		context.Background(), storeIncidentQuery,
 		incident.Id, incident.Summary, incident.IncidentNumber, createdAt,
 		incident.Status, incident.Title, incident.IncidentKey, incident.Service.ID,
 		lastStatusChangeAt, incident.EscalationPolicy.ID, teamIds, priorityId,

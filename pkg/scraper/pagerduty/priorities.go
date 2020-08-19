@@ -1,14 +1,15 @@
 package pagerduty
 
 import (
+	"context"
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 )
 
 type ScrapePrioritiesOptions struct{}
 
 // Scrape and store Pagerduty Priorities.
-func ScrapePriorities(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapePrioritiesOptions) (int, error) {
+func ScrapePriorities(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapePrioritiesOptions) (int, error) {
 	client := newPDClient(pdOptions)
 	response, err := client.ListPriorities()
 	if err != nil {
@@ -16,7 +17,7 @@ func ScrapePriorities(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, 
 	}
 	totalPriorities := 0
 	for _, priority := range response.Priorities {
-		if err := storePriority(dbOptions, &priority); err != nil {
+		if err := storePriority(dbConn, &priority); err != nil {
 			return totalPriorities, err
 		}
 		totalPriorities += 1
@@ -36,9 +37,9 @@ const storePriorityQuery = `
 			description=excluded.description
 `
 
-func storePriority(dbOptions db.DatabaseOptions, priority *pagerduty.PriorityProperty) error {
-	_, err := db.SingleExec(
-		dbOptions, storePriorityQuery,
+func storePriority(dbConn *pgx.Conn, priority *pagerduty.PriorityProperty) error {
+	_, err := dbConn.Exec(
+		context.Background(), storePriorityQuery,
 		priority.ID, priority.Summary, priority.Name, priority.Description)
 	return err
 }

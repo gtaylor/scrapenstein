@@ -1,14 +1,15 @@
 package pagerduty
 
 import (
+	"context"
 	"github.com/PagerDuty/go-pagerduty"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 )
 
 type ScrapeEscalationPoliciesOptions struct{}
 
 // Scrape and store Pagerduty Escalation Policies.
-func ScrapeEscalationPolicies(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, options ScrapeEscalationPoliciesOptions) (int, error) {
+func ScrapeEscalationPolicies(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeEscalationPoliciesOptions) (int, error) {
 	listOptions := pagerduty.ListEscalationPoliciesOptions{
 		APIListObject: defaultAPIListObject(),
 	}
@@ -20,7 +21,7 @@ func ScrapeEscalationPolicies(dbOptions db.DatabaseOptions, pdOptions PagerDutyO
 			return totalPolicies, err
 		}
 		for _, escalationPolicy := range response.EscalationPolicies {
-			if err := storeEscalationPolicy(dbOptions, &escalationPolicy); err != nil {
+			if err := storeEscalationPolicy(dbConn, &escalationPolicy); err != nil {
 				return totalPolicies, err
 			}
 			totalPolicies += 1
@@ -42,9 +43,9 @@ const storeEscalationPolicyQuery = `
 			name=excluded.name, 
 			description=excluded.description`
 
-func storeEscalationPolicy(dbOptions db.DatabaseOptions, escalationPolicy *pagerduty.EscalationPolicy) error {
-	_, err := db.SingleExec(
-		dbOptions, storeEscalationPolicyQuery,
+func storeEscalationPolicy(dbConn *pgx.Conn, escalationPolicy *pagerduty.EscalationPolicy) error {
+	_, err := dbConn.Exec(
+		context.Background(), storeEscalationPolicyQuery,
 		escalationPolicy.ID, escalationPolicy.Name, escalationPolicy.Description)
 	return err
 }
