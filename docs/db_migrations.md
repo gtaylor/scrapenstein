@@ -1,5 +1,11 @@
 For a more detailed walkthrough on DB migrations, see the [upstream docs](https://github.com/golang-migrate/migrate/blob/master/GETTING_STARTED.md) for golang-migrate/migrate. For a tldr, see below.
 
+# Installing golang-migrate
+
+```
+go get -u github.com/golang-migrate/migrate
+```
+
 # Creating a new migration
 
 ```shell script
