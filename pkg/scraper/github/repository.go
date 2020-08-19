@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"github.com/google/go-github/v32/github"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 )
 
 type ScrapeRepositoryOptions struct {
@@ -11,7 +11,7 @@ type ScrapeRepositoryOptions struct {
 	Repo  string
 }
 
-func ScrapeRepository(dbOptions db.DatabaseOptions, ghOptions GitHubOptions, options ScrapeRepositoryOptions) error {
+func ScrapeRepository(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeRepositoryOptions) error {
 	client, err := newGHClient(ghOptions)
 	if err != nil {
 		return err
@@ -20,7 +20,7 @@ func ScrapeRepository(dbOptions db.DatabaseOptions, ghOptions GitHubOptions, opt
 	if err != nil {
 		return err
 	}
-	if err := storeRepository(dbOptions, repo); err != nil {
+	if err := storeRepository(dbConn, repo); err != nil {
 		return err
 	}
 	return nil
@@ -28,15 +28,15 @@ func ScrapeRepository(dbOptions db.DatabaseOptions, ghOptions GitHubOptions, opt
 
 const storeRepositoryQuery = `
 	INSERT INTO github_repositories (
-			id, name, full_name, owner_id, owner_type, private, description, fork, url, forks_count, stargazers_count, 
-			watchers_count, size, default_branch, open_issues_count, is_template, topics, has_issues, has_projects, 
-			has_wiki, has_pages, has_downloads, archived, disabled, visibility, pushed_at, created_at, updated_at,
-			allow_rebase_merge, allow_squash_merge, delete_branch_on_merge, allow_merge_commit, subscribers_count,
-			network_count, organization_id)
-		VALUES(
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 
-			$22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
-	ON CONFLICT (id)
+		id, name, full_name, owner_id, owner_type, private, description, fork, url, forks_count, stargazers_count, 
+		watchers_count, size, default_branch, open_issues_count, is_template, topics, has_issues, has_projects, 
+		has_wiki, has_pages, has_downloads, archived, disabled, visibility, pushed_at, created_at, updated_at,
+		allow_rebase_merge, allow_squash_merge, delete_branch_on_merge, allow_merge_commit, subscribers_count,
+		network_count, organization_id)
+	VALUES(
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 
+		$22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
+	) ON CONFLICT (id)
 		DO UPDATE SET 
 			id=excluded.id, 
 			name=excluded.name, 
@@ -70,15 +70,15 @@ const storeRepositoryQuery = `
 			network_count=excluded.network_count,
 			organization_id=excluded.organization_id`
 
-func storeRepository(dbOptions db.DatabaseOptions, repo *github.Repository) error {
+func storeRepository(dbConn *pgx.Conn, repo *github.Repository) error {
 	owner := repo.GetOwner()
 	var orgId *int64
 	if repo.Organization != nil {
 		orgId = repo.Organization.ID
 	}
 
-	_, err := db.SingleExec(
-		dbOptions, storeRepositoryQuery,
+	_, err := dbConn.Exec(
+		context.Background(), storeRepositoryQuery,
 		repo.GetID(), repo.GetName(), repo.GetFullName(), owner.GetID(), owner.GetType(), repo.GetPrivate(),
 		repo.GetDescription(), repo.GetFork(), repo.GetURL(), repo.GetForksCount(),
 		repo.GetStargazersCount(), repo.GetWatchersCount(), repo.GetSize(), repo.GetDefaultBranch(),

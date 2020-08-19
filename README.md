@@ -10,7 +10,7 @@ There may be large, breaking changes at any point in time.
 
 ## Prerequisites
 
-* A Postgres DB. 10.x or higher is recommended.
+* A Postgres DB. 10.x or higher.
 * Go 1.14+ or higher.
 
 ## Install

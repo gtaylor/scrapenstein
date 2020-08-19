@@ -60,17 +60,23 @@ func mustSetAccessToken(c *cli.Context) error {
 
 // The pre-command (Before) validation is the same for all GitHub subcommands as well.
 func gitHubValidators(c *cli.Context) error {
-	if c.Args().Len() < 1 {
-		return errors.New("You must pass in the org and repo name.")
-	}
-	if c.Args().Len() < 2 {
-		return errors.New("You must pass in the repo name.")
-	}
 	if err := common.MustSetDatabaseURL(c); err != nil {
 		return err
 	}
 	if err := mustSetAccessToken(c); err != nil {
 		return err
+	}
+	return nil
+}
+
+// Verify that an org and repo name were passed in.
+// NOTE: org and repo must be args 1 and 2 respectively.
+func orgAndRepoValidator(c *cli.Context) error {
+	if c.Args().Len() < 1 {
+		return errors.New("You must pass in the org and repo name.")
+	}
+	if c.Args().Len() < 2 {
+		return errors.New("You must pass in the repo name.")
 	}
 	return nil
 }

@@ -3,12 +3,12 @@ package github
 import (
 	"context"
 	"github.com/google/go-github/v32/github"
-	"github.com/gtaylor/scrapenstein/pkg/db"
+	"github.com/jackc/pgx/v4"
 )
 
 type ScrapeOrganizationsOptions struct{}
 
-func ScrapeOrganizations(dbOptions db.DatabaseOptions, ghOptions GitHubOptions, options ScrapeOrganizationsOptions) (int, error) {
+func ScrapeOrganizations(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeOrganizationsOptions) (int, error) {
 	client, err := newGHClient(ghOptions)
 	if err != nil {
 		return 0, err
@@ -21,7 +21,7 @@ func ScrapeOrganizations(dbOptions db.DatabaseOptions, ghOptions GitHubOptions, 
 			return totalOrgs, err
 		}
 		for _, org := range orgs {
-			if err := storeOrganization(dbOptions, org); err != nil {
+			if err := storeOrganization(dbConn, org); err != nil {
 				return totalOrgs, err
 			}
 			totalOrgs += 1
@@ -36,17 +36,18 @@ func ScrapeOrganizations(dbOptions db.DatabaseOptions, ghOptions GitHubOptions, 
 
 const storeOrganizationQuery = `
 	INSERT INTO github_organizations (id, login, url, avatar_url)
-		VALUES($1, $2, $3, $4)
-	ON CONFLICT (id)
+	VALUES(
+		$1, $2, $3, $4
+	) ON CONFLICT (id)
 		DO UPDATE SET 
-			id=excluded.id, 
-			login=excluded.login, 
+			id=excluded.id,
+			login=excluded.login,
 			url=excluded.url,
 			avatar_url=excluded.avatar_url`
 
-func storeOrganization(dbOptions db.DatabaseOptions, org *github.Organization) error {
-	_, err := db.SingleExec(
-		dbOptions, storeOrganizationQuery,
+func storeOrganization(dbConn *pgx.Conn, org *github.Organization) error {
+	_, err := dbConn.Exec(
+		context.Background(), storeOrganizationQuery,
 		org.ID, org.Login, org.URL, org.AvatarURL)
 	return err
 }
