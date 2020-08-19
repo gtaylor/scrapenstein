@@ -37,8 +37,9 @@ func ScrapeServices(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, op
 const storeServiceQuery = `
 	INSERT INTO pagerduty_services (
 		id, summary, name, description, created_at, last_incident, escalation_policy_id, team_ids
-	) VALUES($1, $2, $3, $4, $5, $6, $7, $8)
-	ON CONFLICT (id)
+	) VALUES(
+		$1, $2, $3, $4, $5, $6, $7, $8
+	) ON CONFLICT (id)
 		DO UPDATE SET 
 			summary=excluded.summary, 
 			name=excluded.name,

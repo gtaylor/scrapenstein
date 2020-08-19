@@ -51,8 +51,9 @@ const storeIncidentQuery = `
 	INSERT INTO pagerduty_incidents (
 		id, summary, incident_number, created_at, status, title, incident_key, service_id,
 		last_status_change_at, escalation_policy_id, team_ids, priority_id, urgency
-	) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-	ON CONFLICT (id)
+	) VALUES(
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+	) ON CONFLICT (id)
 		DO UPDATE SET 
 			summary=excluded.summary, 
 			incident_number=excluded.incident_number,

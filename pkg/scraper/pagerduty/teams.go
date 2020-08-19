@@ -36,8 +36,9 @@ func ScrapeTeams(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, optio
 const storeTeamQuery = `
 	INSERT INTO pagerduty_teams (
 		id, summary, name, description
-	) VALUES($1, $2, $3, $4)
-	ON CONFLICT (id)
+	) VALUES(
+		$1, $2, $3, $4
+	) ON CONFLICT (id)
 		DO UPDATE SET 
 			summary=excluded.summary, 
 			name=excluded.name,

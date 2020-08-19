@@ -35,8 +35,9 @@ func ScrapeEscalationPolicies(dbOptions db.DatabaseOptions, pdOptions PagerDutyO
 
 const storeEscalationPolicyQuery = `
 	INSERT INTO pagerduty_escalation_policies (id, name, description)
-		VALUES($1, $2, $3)
-	ON CONFLICT (id)
+	VALUES(
+		$1, $2, $3
+	) ON CONFLICT (id)
 		DO UPDATE SET 
 			name=excluded.name, 
 			description=excluded.description`

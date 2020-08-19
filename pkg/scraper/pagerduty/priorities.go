@@ -27,8 +27,9 @@ func ScrapePriorities(dbOptions db.DatabaseOptions, pdOptions PagerDutyOptions, 
 const storePriorityQuery = `
 	INSERT INTO pagerduty_priorities (
 		id, summary, name, description
-	) VALUES($1, $2, $3, $4)
-	ON CONFLICT (id)
+	) VALUES(
+		$1, $2, $3, $4
+	) ON CONFLICT (id)
 		DO UPDATE SET 
 			summary=excluded.summary, 
 			name=excluded.name,
