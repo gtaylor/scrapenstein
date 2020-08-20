@@ -49,7 +49,6 @@ const storeUserQuery = `
 			site_admin=excluded.site_admin`
 
 func storeUser(dbConn *pgx.Conn, user *github.User) error {
-
 	_, err := dbConn.Exec(
 		context.Background(), storeUserQuery,
 		user.GetID(), user.GetLogin(), user.GetAvatarURL(), user.GetType(),

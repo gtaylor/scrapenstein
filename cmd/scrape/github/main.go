@@ -18,6 +18,7 @@ func Command() *cli.Command {
 			teamsCommand(),
 			repositoryCommand(),
 			commitsCommand(),
+			pullRequestsCommand(),
 		},
 	}
 }
@@ -146,7 +147,7 @@ func repositoryCommand() *cli.Command {
 func commitsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "commits",
-		Usage: "Scrape a Repository's commits",
+		Usage: "Scrape a Repository's Commits",
 		Flags: gitHubFlags(
 			&cli.BoolFlag{
 				Name:  "scrape-stats",
@@ -185,13 +186,56 @@ func commitsCommand() *cli.Command {
 			if options.ScrapeFiles {
 				logrus.Infof("Enabling the scraping of per-file change stats.")
 			}
-
 			logrus.Infof("Beginning scrape of GitHub Commits from %s/%s.", options.Owner, options.Repo)
 			numScraped, err := github.ScrapeCommits(dbConn, ghOptions, options)
 			if err != nil {
 				return err
 			}
 			logrus.Infof("Successfully scraped %d Github Commits from %s/%s.", numScraped, options.Owner, options.Repo)
+			return nil
+		},
+	}
+}
+
+func pullRequestsCommand() *cli.Command {
+	return &cli.Command{
+		Name:  "pullrequests",
+		Usage: "Scrape a Repository's Pull Requests",
+		Flags: gitHubFlags(
+			&cli.BoolFlag{
+				Name:  "scrape-stats",
+				Usage: "Scrape PR stats summary (very slow).",
+				Value: false,
+			},
+		),
+		ArgsUsage: "<owner> <repo>",
+		Before: func(c *cli.Context) error {
+			if err := orgAndRepoValidator(c); err != nil {
+				return err
+			}
+			return gitHubValidators(c)
+		},
+		Action: func(c *cli.Context) error {
+			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
+			ghOptions := githubOptionsFromCtx(c)
+			options := github.ScrapePullRequestsOptions{
+				Owner:       c.Args().Get(0),
+				Repo:        c.Args().Get(1),
+				ScrapeStats: c.Bool("scrape-stats"),
+			}
+			if options.ScrapeStats {
+				logrus.Infof("Enabling the scraping of PR stats.")
+			}
+			logrus.Infof("Beginning scrape of GitHub Pull Requests from %s/%s.", options.Owner, options.Repo)
+			numScraped, err := github.ScrapePullRequests(dbConn, ghOptions, options)
+			if err != nil {
+				return err
+			}
+			logrus.Infof("Successfully scraped %d Github Pull Requests from %s/%s.", numScraped, options.Owner, options.Repo)
 			return nil
 		},
 	}
