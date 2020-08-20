@@ -14,6 +14,7 @@ func Command() *cli.Command {
 		Usage: "GitHub scraper",
 		Subcommands: []*cli.Command{
 			organizationsCommand(),
+			usersCommand(),
 			teamsCommand(),
 			repositoryCommand(),
 			commitsCommand(),
@@ -43,6 +44,33 @@ func organizationsCommand() *cli.Command {
 				return err
 			}
 			logrus.Infof("Successfully scraped %d GitHub Organizations.", numScraped)
+			return nil
+		},
+	}
+}
+
+func usersCommand() *cli.Command {
+	return &cli.Command{
+		Name:  "users",
+		Usage: "Scrape all Users on your GH instance",
+		Flags: gitHubFlags(),
+		Before: func(c *cli.Context) error {
+			return gitHubValidators(c)
+		},
+		Action: func(c *cli.Context) error {
+			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
+			ghOptions := githubOptionsFromCtx(c)
+			options := github.ScrapeUsersOptions{}
+			logrus.Info("Beginning scrape of all Users.")
+			numScraped, err := github.ScrapeUsers(dbConn, ghOptions, options)
+			if err != nil {
+				return err
+			}
+			logrus.Infof("Successfully scraped %d users.", numScraped)
 			return nil
 		},
 	}
@@ -104,12 +132,12 @@ func repositoryCommand() *cli.Command {
 				Owner: c.Args().Get(0),
 				Repo:  c.Args().Get(1),
 			}
-			logrus.Infof("Beginning scrape of GitHub Repository: %s/%s", options.Owner, options.Repo)
+			logrus.Infof("Beginning scrape of GitHub Repository %s/%s.", options.Owner, options.Repo)
 			err = github.ScrapeRepository(dbConn, ghOptions, options)
 			if err != nil {
 				return err
 			}
-			logrus.Infof("Successfully scraped Github Repository %s/%s", options.Owner, options.Repo)
+			logrus.Infof("Successfully scraped Github Repository %s/%s.", options.Owner, options.Repo)
 			return nil
 		},
 	}

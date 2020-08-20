@@ -49,8 +49,7 @@ const storeTeamQuery = `
 			description=excluded.description,
 			privacy=excluded.privacy,
 			permission=excluded.permission,
-			parent_id=excluded.parent_id
-`
+			parent_id=excluded.parent_id`
 
 func storeTeam(dbConn *pgx.Conn, team *github.Team) error {
 	parent := team.GetParent()
