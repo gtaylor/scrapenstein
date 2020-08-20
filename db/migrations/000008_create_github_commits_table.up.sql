@@ -3,7 +3,7 @@ CREATE TABLE github_commits
     repo_id                integer             NOT NULL,
     sha                    varchar             NOT NULL,
     author_id              integer             NOT NULL,
-    committer_id           integer             NOT NULL,
+    committer_id           integer,
     parents_sha            character varying[] NOT NULL,
     commit_author_name     varchar             NOT NULL,
     commit_author_email    varchar             NOT NULL,
@@ -24,3 +24,4 @@ ALTER TABLE github_commits
 
 CREATE INDEX github_commits_repo_id_sha_index
     ON github_commits (repo_id, sha);
+

@@ -35,19 +35,19 @@ func ScrapeOrganizations(dbConn *pgx.Conn, ghOptions GitHubOptions, options Scra
 }
 
 const storeOrganizationQuery = `
-	INSERT INTO github_organizations (id, login, url, avatar_url)
-	VALUES(
-		$1, $2, $3, $4
+	INSERT INTO github_organizations (
+		id, login, avatar_url
+	) VALUES(
+		$1, $2, $3
 	) ON CONFLICT (id)
 		DO UPDATE SET 
 			id=excluded.id,
 			login=excluded.login,
-			url=excluded.url,
 			avatar_url=excluded.avatar_url`
 
 func storeOrganization(dbConn *pgx.Conn, org *github.Organization) error {
 	_, err := dbConn.Exec(
 		context.Background(), storeOrganizationQuery,
-		org.ID, org.Login, org.URL, org.AvatarURL)
+		org.ID, org.Login, org.AvatarURL)
 	return err
 }

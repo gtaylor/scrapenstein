@@ -81,6 +81,13 @@ func orgAndRepoValidator(c *cli.Context) error {
 	return nil
 }
 
+func orgValidator(c *cli.Context) error {
+	if c.Args().Len() < 1 {
+		return errors.New("You must pass in the org name.")
+	}
+	return nil
+}
+
 // Pulls GH options from the CLI and returns a GitHubOptions instance.
 func githubOptionsFromCtx(c *cli.Context) github.GitHubOptions {
 	return github.GitHubOptions{

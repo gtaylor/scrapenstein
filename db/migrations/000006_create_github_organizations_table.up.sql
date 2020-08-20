@@ -4,7 +4,6 @@ CREATE TABLE github_organizations
         CONSTRAINT github_organizations_pk
             PRIMARY KEY,
     login      varchar NOT NULL,
-    url        varchar NOT NULL,
     avatar_url varchar NOT NULL
 );
 

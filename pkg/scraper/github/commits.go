@@ -104,13 +104,17 @@ func storeCommit(dbConn *pgx.Conn, repoId int64, repoCommit *github.RepositoryCo
 	gitCommitCommitter := gitCommit.GetCommitter()
 	gitCommitVerification := gitCommit.GetVerification()
 	parentsSha := make([]string, 0)
+	var committerId *int64
+	if repoCommit.Committer != nil {
+		committerId = repoCommit.Committer.ID
+	}
 	for _, parent := range repoCommit.Parents {
 		parentsSha = append(parentsSha, *parent.SHA)
 	}
 
 	_, err := dbConn.Exec(
 		context.Background(), storeCommitQuery,
-		repoId, repoCommit.GetSHA(), repoCommit.GetAuthor().GetID(), repoCommit.GetCommitter().GetID(), parentsSha,
+		repoId, repoCommit.GetSHA(), repoCommit.GetAuthor().GetID(), committerId, parentsSha,
 		gitCommitAuthor.GetName(), gitCommitAuthor.GetEmail(), gitCommitAuthor.Date,
 		gitCommitCommitter.GetName(), gitCommitCommitter.GetEmail(), gitCommitCommitter.Date,
 		gitCommit.GetMessage(), gitCommit.GetTree().GetSHA(), gitCommitVerification.GetVerified(),

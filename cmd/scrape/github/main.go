@@ -14,6 +14,7 @@ func Command() *cli.Command {
 		Usage: "GitHub scraper",
 		Subcommands: []*cli.Command{
 			organizationsCommand(),
+			teamsCommand(),
 			repositoryCommand(),
 			commitsCommand(),
 		},
@@ -42,6 +43,39 @@ func organizationsCommand() *cli.Command {
 				return err
 			}
 			logrus.Infof("Successfully scraped %d GitHub Organizations.", numScraped)
+			return nil
+		},
+	}
+}
+
+func teamsCommand() *cli.Command {
+	return &cli.Command{
+		Name:      "teams",
+		Usage:     "Scrape an Organization's Teams",
+		Flags:     gitHubFlags(),
+		ArgsUsage: "<org>",
+		Before: func(c *cli.Context) error {
+			if err := orgValidator(c); err != nil {
+				return err
+			}
+			return gitHubValidators(c)
+		},
+		Action: func(c *cli.Context) error {
+			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
+			ghOptions := githubOptionsFromCtx(c)
+			options := github.ScrapeTeamsOptions{
+				Org: c.Args().Get(0),
+			}
+			logrus.Infof("Beginning scrape of GitHub Teams from org %s.", options.Org)
+			numScraped, err := github.ScrapeTeams(dbConn, ghOptions, options)
+			if err != nil {
+				return err
+			}
+			logrus.Infof("Successfully scraped %d GitHub Teams from org %s.", numScraped, options.Org)
 			return nil
 		},
 	}
@@ -124,12 +158,12 @@ func commitsCommand() *cli.Command {
 				logrus.Infof("Enabling the scraping of per-file change stats.")
 			}
 
-			logrus.Infof("Beginning scrape of GitHub Commits: %s/%s", options.Owner, options.Repo)
+			logrus.Infof("Beginning scrape of GitHub Commits from %s/%s.", options.Owner, options.Repo)
 			numScraped, err := github.ScrapeCommits(dbConn, ghOptions, options)
 			if err != nil {
 				return err
 			}
-			logrus.Infof("Successfully scraped %d Github Commits %s/%s", numScraped, options.Owner, options.Repo)
+			logrus.Infof("Successfully scraped %d Github Commits from %s/%s.", numScraped, options.Owner, options.Repo)
 			return nil
 		},
 	}
