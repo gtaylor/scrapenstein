@@ -19,6 +19,7 @@ func Command() *cli.Command {
 			repositoryCommand(),
 			commitsCommand(),
 			pullRequestsCommand(),
+			issuesCommand(),
 		},
 	}
 }
@@ -236,6 +237,40 @@ func pullRequestsCommand() *cli.Command {
 				return err
 			}
 			logrus.Infof("Successfully scraped %d Github Pull Requests from %s/%s.", numScraped, options.Owner, options.Repo)
+			return nil
+		},
+	}
+}
+
+func issuesCommand() *cli.Command {
+	return &cli.Command{
+		Name:      "issues",
+		Usage:     "Scrape a Repository's Issues",
+		Flags:     gitHubFlags(),
+		ArgsUsage: "<owner> <repo>",
+		Before: func(c *cli.Context) error {
+			if err := orgAndRepoValidator(c); err != nil {
+				return err
+			}
+			return gitHubValidators(c)
+		},
+		Action: func(c *cli.Context) error {
+			dbOptions := common.DatabaseOptionsFromCtx(c)
+			dbConn, err := db.Connect(dbOptions)
+			if err != nil {
+				return err
+			}
+			ghOptions := githubOptionsFromCtx(c)
+			options := github.ScrapeIssuesOptions{
+				Owner: c.Args().Get(0),
+				Repo:  c.Args().Get(1),
+			}
+			logrus.Infof("Beginning scrape of GitHub Issues from %s/%s.", options.Owner, options.Repo)
+			numScraped, err := github.ScrapeIssues(dbConn, ghOptions, options)
+			if err != nil {
+				return err
+			}
+			logrus.Infof("Successfully scraped %d Github Issues from %s/%s.", numScraped, options.Owner, options.Repo)
 			return nil
 		},
 	}
