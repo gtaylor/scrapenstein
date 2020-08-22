@@ -9,9 +9,8 @@ import (
 type ScrapePrioritiesOptions struct{}
 
 // Scrape and store Pagerduty Priorities.
-func ScrapePriorities(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapePrioritiesOptions) (int, error) {
-	client := newPDClient(pdOptions)
-	response, err := client.ListPriorities()
+func ScrapePriorities(dbConn *pgx.Conn, pdClient *pagerduty.Client, options ScrapePrioritiesOptions) (int, error) {
+	response, err := pdClient.ListPriorities()
 	if err != nil {
 		return 0, err
 	}

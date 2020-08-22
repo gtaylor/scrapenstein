@@ -9,14 +9,13 @@ import (
 type ScrapeEscalationPoliciesOptions struct{}
 
 // Scrape and store Pagerduty Escalation Policies.
-func ScrapeEscalationPolicies(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeEscalationPoliciesOptions) (int, error) {
+func ScrapeEscalationPolicies(dbConn *pgx.Conn, pdClient *pagerduty.Client, options ScrapeEscalationPoliciesOptions) (int, error) {
 	listOptions := pagerduty.ListEscalationPoliciesOptions{
 		APIListObject: defaultAPIListObject(),
 	}
-	client := newPDClient(pdOptions)
 	totalPolicies := 0
 	for {
-		response, err := client.ListEscalationPolicies(listOptions)
+		response, err := pdClient.ListEscalationPolicies(listOptions)
 		if err != nil {
 			return totalPolicies, err
 		}

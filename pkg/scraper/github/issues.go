@@ -13,20 +13,16 @@ type ScrapeIssuesOptions struct {
 	ScrapeStats bool
 }
 
-func ScrapeIssues(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeIssuesOptions) (int, error) {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return 0, err
-	}
+func ScrapeIssues(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeIssuesOptions) (int, error) {
 	// The ListByRepo() call does not return the repo's ID. We'll query it separately.
-	if err = ensureRepoIdFromAPI(client, &options.OrgRepoAndRepoId); err != nil {
+	if err := ensureRepoIdFromAPI(ghClient, &options.OrgRepoAndRepoId); err != nil {
 		return 0, nil
 	}
 
 	listOpts := github.IssueListByRepoOptions{State: "all"}
 	totalIssues := 0
 	for {
-		issues, response, err := client.Issues.ListByRepo(context.Background(), options.Owner, options.Repo, &listOpts)
+		issues, response, err := ghClient.Issues.ListByRepo(context.Background(), options.Owner, options.Repo, &listOpts)
 		if err != nil {
 			return totalIssues, err
 		}

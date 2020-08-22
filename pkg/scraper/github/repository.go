@@ -10,12 +10,8 @@ type ScrapeRepositoryOptions struct {
 	OrgRepoAndRepoId
 }
 
-func ScrapeRepository(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeRepositoryOptions) error {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return err
-	}
-	repo, _, err := client.Repositories.Get(context.Background(), options.Owner, options.Repo)
+func ScrapeRepository(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeRepositoryOptions) error {
+	repo, _, err := ghClient.Repositories.Get(context.Background(), options.Owner, options.Repo)
 	if err != nil {
 		return err
 	}

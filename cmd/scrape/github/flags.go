@@ -3,7 +3,6 @@ package github
 import (
 	"errors"
 	"github.com/gtaylor/scrapenstein/cmd/scrape/common"
-	"github.com/gtaylor/scrapenstein/pkg/scraper/github"
 	"github.com/urfave/cli/v2"
 )
 
@@ -86,13 +85,4 @@ func orgValidator(c *cli.Context) error {
 		return errors.New("You must pass in the org name.")
 	}
 	return nil
-}
-
-// Pulls GH options from the CLI and returns a GitHubOptions instance.
-func githubOptionsFromCtx(c *cli.Context) github.GitHubOptions {
-	return github.GitHubOptions{
-		AccessToken: c.String(accessTokenFlagName),
-		BaseURL:     c.String(baseURLFlagName),
-		UploadURL:   c.String(uploadURLFlagName),
-	}
 }

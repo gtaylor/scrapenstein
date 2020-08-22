@@ -3,7 +3,6 @@ package pagerduty
 import (
 	"errors"
 	"github.com/gtaylor/scrapenstein/cmd/scrape/common"
-	"github.com/gtaylor/scrapenstein/pkg/scraper/pagerduty"
 	"github.com/urfave/cli/v2"
 )
 
@@ -41,10 +40,4 @@ func pagerDutyValidators(c *cli.Context) error {
 		return err
 	}
 	return nil
-}
-
-func pagerDutyOptionsFromCtx(c *cli.Context) pagerduty.PagerDutyOptions {
-	return pagerduty.PagerDutyOptions{
-		AuthToken: c.String(authTokenFlagName),
-	}
 }

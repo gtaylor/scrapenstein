@@ -6,16 +6,8 @@ import (
 	"context"
 	"errors"
 	"github.com/google/go-github/v32/github"
-	"golang.org/x/oauth2"
 	"time"
 )
-
-// Holds GitHub client options.
-type GitHubOptions struct {
-	AccessToken string
-	BaseURL     string
-	UploadURL   string
-}
 
 // Convenience struct used to hold repo identifiers, typically in scrape options structs.
 type OrgRepoAndRepoId struct {
@@ -23,19 +15,6 @@ type OrgRepoAndRepoId struct {
 	Repo  string
 	// Providing RepoID allows for skipping a query for the repo's ID for List calls.
 	RepoId int64
-}
-
-func newGHClient(options GitHubOptions) (*github.Client, error) {
-	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: options.AccessToken},
-	)
-	httpClient := oauth2.NewClient(context.Background(), tokenSource)
-
-	if options.BaseURL != "" && options.UploadURL != "" {
-		return github.NewEnterpriseClient(options.BaseURL, options.UploadURL, httpClient)
-	} else {
-		return github.NewClient(httpClient), nil
-	}
 }
 
 // Convenience wrapper to provide consistent pagination behavior.

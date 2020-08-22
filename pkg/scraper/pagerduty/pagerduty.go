@@ -11,11 +11,6 @@ import (
 // See: https://developer.pagerduty.com/docs/rest-api-v2/pagination/
 const maxListOffset = 10000
 
-// Holds PagerDuty client options.
-type PagerDutyOptions struct {
-	AuthToken string
-}
-
 // Parses the standard ISO 8601 DateTimes that the PD API returns.
 // See: https://developer.pagerduty.com/docs/rest-api-v2/types/
 func parseDateTime(timeStr string) (time.Time, error) {
@@ -35,8 +30,4 @@ func continuePaginating(listObj pagerduty.APIListObject, total int) bool {
 
 func defaultAPIListObject() pagerduty.APIListObject {
 	return pagerduty.APIListObject{Offset: 0, Limit: 100}
-}
-
-func newPDClient(pdOptions PagerDutyOptions) *pagerduty.Client {
-	return pagerduty.NewClient(pdOptions.AuthToken)
 }

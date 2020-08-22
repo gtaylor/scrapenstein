@@ -8,15 +8,11 @@ import (
 
 type ScrapeUsersOptions struct{}
 
-func ScrapeUsers(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeUsersOptions) (int, error) {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return 0, err
-	}
+func ScrapeUsers(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeUsersOptions) (int, error) {
 	listAllOpts := github.UserListOptions{}
 	totalUsers := 0
 	for {
-		users, _, err := client.Users.ListAll(context.Background(), &listAllOpts)
+		users, _, err := ghClient.Users.ListAll(context.Background(), &listAllOpts)
 		if err != nil {
 			return totalUsers, err
 		}

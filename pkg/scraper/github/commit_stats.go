@@ -17,22 +17,18 @@ type ScrapeCommitStatsOptions struct {
 	ScrapeFiles bool
 }
 
-func ScrapeCommitStats(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeCommitStatsOptions) error {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return err
-	}
+func ScrapeCommitStats(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeCommitStatsOptions) error {
 	if options.RepoId == 0 {
 		// The Repo's ID is used as our repo PKey instead of the owner + name
 		// since repo names can change.
-		repo, _, err := client.Repositories.Get(context.Background(), options.Owner, options.Repo)
+		repo, _, err := ghClient.Repositories.Get(context.Background(), options.Owner, options.Repo)
 		if err != nil {
 			return err
 		}
 		options.RepoId = repo.GetID()
 	}
 
-	repoCommit, _, err := client.Repositories.GetCommit(
+	repoCommit, _, err := ghClient.Repositories.GetCommit(
 		context.Background(), options.Owner, options.Repo, options.CommitSHA)
 	if err != nil {
 		return err

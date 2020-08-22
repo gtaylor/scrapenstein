@@ -13,20 +13,16 @@ type ScrapePullRequestsOptions struct {
 	ScrapeStats bool
 }
 
-func ScrapePullRequests(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapePullRequestsOptions) (int, error) {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return 0, err
-	}
+func ScrapePullRequests(dbConn *pgx.Conn, ghClient *github.Client, options ScrapePullRequestsOptions) (int, error) {
 	// The List() call does not return the repo's ID. We'll query it separately.
-	if err = ensureRepoIdFromAPI(client, &options.OrgRepoAndRepoId); err != nil {
+	if err := ensureRepoIdFromAPI(ghClient, &options.OrgRepoAndRepoId); err != nil {
 		return 0, nil
 	}
 
 	listOpts := github.PullRequestListOptions{State: "all"}
 	totalPRs := 0
 	for {
-		pullRequests, response, err := client.PullRequests.List(context.Background(), options.Owner, options.Repo, &listOpts)
+		pullRequests, response, err := ghClient.PullRequests.List(context.Background(), options.Owner, options.Repo, &listOpts)
 		if err != nil {
 			return totalPRs, err
 		}
@@ -34,7 +30,7 @@ func ScrapePullRequests(dbConn *pgx.Conn, ghOptions GitHubOptions, options Scrap
 			if options.ScrapeStats {
 				// The API does not return comment, review comment, or change stats in List mode.
 				// To get those stats, we must issue a Get request for each PR. :(
-				detailedPR, _, err := client.PullRequests.Get(context.Background(), options.Owner, options.Repo, pullRequest.GetNumber())
+				detailedPR, _, err := ghClient.PullRequests.Get(context.Background(), options.Owner, options.Repo, pullRequest.GetNumber())
 				if err != nil {
 					return totalPRs, err
 				}

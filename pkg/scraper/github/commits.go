@@ -14,13 +14,9 @@ type ScrapeCommitsOptions struct {
 	ScrapeFiles bool
 }
 
-func ScrapeCommits(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeCommitsOptions) (int, error) {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return 0, err
-	}
+func ScrapeCommits(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeCommitsOptions) (int, error) {
 	// The ListCommits() call does not return the repo's ID. We'll query it separately.
-	if err = ensureRepoIdFromAPI(client, &options.OrgRepoAndRepoId); err != nil {
+	if err := ensureRepoIdFromAPI(ghClient, &options.OrgRepoAndRepoId); err != nil {
 		return 0, nil
 	}
 
@@ -29,7 +25,7 @@ func ScrapeCommits(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeComm
 	}
 	totalCommits := 0
 	for {
-		orgs, response, err := client.Repositories.ListCommits(
+		orgs, response, err := ghClient.Repositories.ListCommits(
 			context.Background(), options.Owner, options.Repo, &listAllOpts)
 		if err != nil {
 			return totalCommits, err
@@ -46,7 +42,7 @@ func ScrapeCommits(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeComm
 					CommitSHA:   repoCommit.GetSHA(),
 					ScrapeFiles: options.ScrapeFiles,
 				}
-				if err := ScrapeCommitStats(dbConn, ghOptions, statsOptions); err != nil {
+				if err := ScrapeCommitStats(dbConn, ghClient, statsOptions); err != nil {
 					return totalCommits, err
 				}
 			}

@@ -10,15 +10,11 @@ type ScrapeTeamsOptions struct {
 	Org string
 }
 
-func ScrapeTeams(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeTeamsOptions) (int, error) {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return 0, err
-	}
+func ScrapeTeams(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeTeamsOptions) (int, error) {
 	listOpts := github.ListOptions{}
 	totalTeams := 0
 	for {
-		teams, response, err := client.Teams.ListTeams(context.Background(), options.Org, &listOpts)
+		teams, response, err := ghClient.Teams.ListTeams(context.Background(), options.Org, &listOpts)
 		if err != nil {
 			return totalTeams, err
 		}

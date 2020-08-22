@@ -19,7 +19,7 @@ type ScrapeIncidentsOptions struct {
 }
 
 // Scrape and store Pagerduty Incidents.
-func ScrapeIncidents(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeIncidentsOptions) (int, error) {
+func ScrapeIncidents(dbConn *pgx.Conn, pdClient *pagerduty.Client, options ScrapeIncidentsOptions) (int, error) {
 	listOptions := pagerduty.ListIncidentsOptions{
 		Since:         options.SinceTime.Format(time.RFC3339),
 		Until:         options.UntilTime.Format(time.RFC3339),
@@ -27,10 +27,9 @@ func ScrapeIncidents(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options Scrap
 		ServiceIDs:    options.ServiceIds,
 		APIListObject: defaultAPIListObject(),
 	}
-	client := newPDClient(pdOptions)
 	totalIncidents := 0
 	for {
-		response, err := client.ListIncidents(listOptions)
+		response, err := pdClient.ListIncidents(listOptions)
 		if err != nil {
 			return totalIncidents, err
 		}

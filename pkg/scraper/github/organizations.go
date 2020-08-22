@@ -8,15 +8,11 @@ import (
 
 type ScrapeOrganizationsOptions struct{}
 
-func ScrapeOrganizations(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeOrganizationsOptions) (int, error) {
-	client, err := newGHClient(ghOptions)
-	if err != nil {
-		return 0, err
-	}
+func ScrapeOrganizations(dbConn *pgx.Conn, ghClient *github.Client, options ScrapeOrganizationsOptions) (int, error) {
 	listAllOpts := github.OrganizationsListOptions{}
 	totalOrgs := 0
 	for {
-		orgs, response, err := client.Organizations.ListAll(context.Background(), &listAllOpts)
+		orgs, response, err := ghClient.Organizations.ListAll(context.Background(), &listAllOpts)
 		if err != nil {
 			return totalOrgs, err
 		}

@@ -9,14 +9,13 @@ import (
 type ScrapeTeamsOptions struct{}
 
 // Scrape and store Pagerduty Teams.
-func ScrapeTeams(dbConn *pgx.Conn, pdOptions PagerDutyOptions, options ScrapeTeamsOptions) (int, error) {
+func ScrapeTeams(dbConn *pgx.Conn, pdClient *pagerduty.Client, options ScrapeTeamsOptions) (int, error) {
 	listOptions := pagerduty.ListTeamOptions{
 		APIListObject: defaultAPIListObject(),
 	}
-	client := newPDClient(pdOptions)
 	totalTeams := 0
 	for {
-		response, err := client.ListTeams(listOptions)
+		response, err := pdClient.ListTeams(listOptions)
 		if err != nil {
 			return totalTeams, err
 		}

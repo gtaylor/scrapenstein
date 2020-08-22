@@ -1,8 +1,6 @@
 package github
 
 import (
-	"github.com/gtaylor/scrapenstein/cmd/scrape/common"
-	"github.com/gtaylor/scrapenstein/pkg/db"
 	"github.com/gtaylor/scrapenstein/pkg/scraper/github"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -33,15 +31,13 @@ func organizationsCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeOrganizationsOptions{}
 			logrus.Info("Beginning scrape of GitHub Organizations.")
-			numScraped, err := github.ScrapeOrganizations(dbConn, ghOptions, options)
+			numScraped, err := github.ScrapeOrganizations(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
@@ -60,15 +56,13 @@ func usersCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeUsersOptions{}
 			logrus.Info("Beginning scrape of all Users.")
-			numScraped, err := github.ScrapeUsers(dbConn, ghOptions, options)
+			numScraped, err := github.ScrapeUsers(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
@@ -91,17 +85,15 @@ func teamsCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeTeamsOptions{
 				Org: c.Args().Get(0),
 			}
 			logrus.Infof("Beginning scrape of GitHub Teams from org %s.", options.Org)
-			numScraped, err := github.ScrapeTeams(dbConn, ghOptions, options)
+			numScraped, err := github.ScrapeTeams(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
@@ -124,12 +116,10 @@ func repositoryCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeRepositoryOptions{
 				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
 					Owner: c.Args().Get(0),
@@ -137,7 +127,7 @@ func repositoryCommand() *cli.Command {
 				},
 			}
 			logrus.Infof("Beginning scrape of GitHub Repository %s/%s.", options.Owner, options.Repo)
-			err = github.ScrapeRepository(dbConn, ghOptions, options)
+			err = github.ScrapeRepository(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
@@ -171,12 +161,10 @@ func commitsCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeCommitsOptions{
 				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
 					Owner: c.Args().Get(0),
@@ -192,7 +180,7 @@ func commitsCommand() *cli.Command {
 				logrus.Infof("Enabling the scraping of per-file change stats.")
 			}
 			logrus.Infof("Beginning scrape of GitHub Commits from %s/%s.", options.Owner, options.Repo)
-			numScraped, err := github.ScrapeCommits(dbConn, ghOptions, options)
+			numScraped, err := github.ScrapeCommits(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
@@ -221,12 +209,10 @@ func pullRequestsCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapePullRequestsOptions{
 				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
 					Owner: c.Args().Get(0),
@@ -238,7 +224,7 @@ func pullRequestsCommand() *cli.Command {
 				logrus.Infof("Enabling the scraping of PR stats.")
 			}
 			logrus.Infof("Beginning scrape of GitHub Pull Requests from %s/%s.", options.Owner, options.Repo)
-			numScraped, err := github.ScrapePullRequests(dbConn, ghOptions, options)
+			numScraped, err := github.ScrapePullRequests(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
@@ -261,12 +247,10 @@ func issuesCommand() *cli.Command {
 			return gitHubValidators(c)
 		},
 		Action: func(c *cli.Context) error {
-			dbOptions := common.DatabaseOptionsFromCtx(c)
-			dbConn, err := db.Connect(dbOptions)
+			dbConn, ghClient, err := newClients(c)
 			if err != nil {
 				return err
 			}
-			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeIssuesOptions{
 				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
 					Owner: c.Args().Get(0),
@@ -274,7 +258,7 @@ func issuesCommand() *cli.Command {
 				},
 			}
 			logrus.Infof("Beginning scrape of GitHub Issues from %s/%s.", options.Owner, options.Repo)
-			numScraped, err := github.ScrapeIssues(dbConn, ghOptions, options)
+			numScraped, err := github.ScrapeIssues(dbConn, ghClient, options)
 			if err != nil {
 				return err
 			}
