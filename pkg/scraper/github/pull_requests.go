@@ -7,11 +7,7 @@ import (
 )
 
 type ScrapePullRequestsOptions struct {
-	Owner string
-	Repo  string
-	// Providing RepoID allows for skipping a query for the repo's ID.
-	// If this value is 0, the repo's ID will be queried from the Owner+Repo combo.
-	RepoId int64
+	OrgRepoAndRepoId
 	// If true, scrape the PR summary stats (comment count, additions, deletions, etc).
 	// This is VERY slow since we end up making one API request per scraped PR.
 	ScrapeStats bool
@@ -22,17 +18,9 @@ func ScrapePullRequests(dbConn *pgx.Conn, ghOptions GitHubOptions, options Scrap
 	if err != nil {
 		return 0, err
 	}
-	// The Repo's ID is used as our repo PKey instead of the owner + name
-	// since repo names can change.
-	// The ListCommits() call does not return the repo's ID. We'll query it separately.
-	if options.RepoId == 0 {
-		// The Repo's ID is used as our repo PKey instead of the owner + name
-		// since repo names can change.
-		repo, _, err := client.Repositories.Get(context.Background(), options.Owner, options.Repo)
-		if err != nil {
-			return 0, err
-		}
-		options.RepoId = repo.GetID()
+	// The List() call does not return the repo's ID. We'll query it separately.
+	if err = ensureRepoIdFromAPI(client, &options.OrgRepoAndRepoId); err != nil {
+		return 0, nil
 	}
 
 	listOpts := github.PullRequestListOptions{State: "all"}

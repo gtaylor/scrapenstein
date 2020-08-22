@@ -131,8 +131,10 @@ func repositoryCommand() *cli.Command {
 			}
 			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeRepositoryOptions{
-				Owner: c.Args().Get(0),
-				Repo:  c.Args().Get(1),
+				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
+					Owner: c.Args().Get(0),
+					Repo:  c.Args().Get(1),
+				},
 			}
 			logrus.Infof("Beginning scrape of GitHub Repository %s/%s.", options.Owner, options.Repo)
 			err = github.ScrapeRepository(dbConn, ghOptions, options)
@@ -176,8 +178,10 @@ func commitsCommand() *cli.Command {
 			}
 			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeCommitsOptions{
-				Owner:       c.Args().Get(0),
-				Repo:        c.Args().Get(1),
+				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
+					Owner: c.Args().Get(0),
+					Repo:  c.Args().Get(1),
+				},
 				ScrapeStats: c.Bool("scrape-stats"),
 				ScrapeFiles: c.Bool("scrape-files"),
 			}
@@ -224,8 +228,10 @@ func pullRequestsCommand() *cli.Command {
 			}
 			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapePullRequestsOptions{
-				Owner:       c.Args().Get(0),
-				Repo:        c.Args().Get(1),
+				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
+					Owner: c.Args().Get(0),
+					Repo:  c.Args().Get(1),
+				},
 				ScrapeStats: c.Bool("scrape-stats"),
 			}
 			if options.ScrapeStats {
@@ -262,8 +268,10 @@ func issuesCommand() *cli.Command {
 			}
 			ghOptions := githubOptionsFromCtx(c)
 			options := github.ScrapeIssuesOptions{
-				Owner: c.Args().Get(0),
-				Repo:  c.Args().Get(1),
+				OrgRepoAndRepoId: github.OrgRepoAndRepoId{
+					Owner: c.Args().Get(0),
+					Repo:  c.Args().Get(1),
+				},
 			}
 			logrus.Infof("Beginning scrape of GitHub Issues from %s/%s.", options.Owner, options.Repo)
 			numScraped, err := github.ScrapeIssues(dbConn, ghOptions, options)

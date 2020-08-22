@@ -7,8 +7,7 @@ import (
 )
 
 type ScrapeRepositoryOptions struct {
-	Owner string
-	Repo  string
+	OrgRepoAndRepoId
 }
 
 func ScrapeRepository(dbConn *pgx.Conn, ghOptions GitHubOptions, options ScrapeRepositoryOptions) error {
